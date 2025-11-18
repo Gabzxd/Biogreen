@@ -1,19 +1,15 @@
-// apps/api/src/middleware/auth.ts
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-export function authGuard(req: any, res: any, next: any) {
-  const h = req.headers.authorization;
-  if (!h) return res.status(401).json({ error: "Não autorizado" });
-  const token = h.replace("Bearer ", "");
+
+export function authenticate(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "Token não fornecido" });
+
   try {
-    const payload: any = jwt.verify(token, process.env.JWT_SECRET!);
-    req.user = { id: payload.sub, role: payload.role };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    req.user = decoded; // você pode tipar isso melhor depois
     next();
   } catch {
-    return res.status(401).json({ error: "Token inválido" });
+    return res.status(403).json({ error: "Token inválido" });
   }
-}
-
-export function adminGuard(req: any, res: any, next: any) {
-  if (req.user?.role !== "ADMIN") return res.status(403).json({ error: "Acesso negado" });
-  next();
 }

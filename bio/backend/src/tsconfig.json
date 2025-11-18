@@ -5,7 +5,18 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": "./src",
+    "paths": {
+      "@prisma/*": ["prisma/*"],
+      "@auth/*": ["modules/auth/*"],
+      "@cart/*": ["modules/cart/*"],
+      "@catalog/*": ["modules/catalog/*"],
+      "@admin/*": ["modules/admin/*"],
+      "@payments/*": ["modules/payments/*"],
+      "@shared/*": ["shared/*"],
+      "@middleware/*": ["middleware/*"]
+    }
   },
   "include": ["src"]
 }

@@ -1,21 +1,19 @@
-// apps/api/src/modules/auth/routes.ts
-import { Router } from "express";
-import { prisma } from "../../prisma/client";
+import { Router, Request, Response } from "express";
+import { prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { sendMail } from "../../shared/mailer";
+import { sendMail } from "@shared/mailer";
 
-const r = Router();
+const router = Router();
 
-r.post("/register", async (req, res) => {
+router.post("/register", async (req: Request, res: Response) => {
   const { email, password, name } = req.body;
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) return res.status(400).json({ error: "E-mail já cadastrado" });
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({ data: { email, passwordHash, name } });
 
-  // cria código de verificação 6 dígitos
   const code = (Math.floor(100000 + Math.random() * 900000)).toString();
   const expiresAt = new Date(Date.now() + 1000 * 60 * 15);
   await prisma.verificationToken.create({ data: { userId: user.id, code, expiresAt } });
@@ -24,7 +22,7 @@ r.post("/register", async (req, res) => {
   res.json({ id: user.id });
 });
 
-r.post("/verify", async (req, res) => {
+router.post("/verify", async (req: Request, res: Response) => {
   const { email, code } = req.body;
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return res.status(400).json({ error: "Usuário não encontrado" });
@@ -37,7 +35,7 @@ r.post("/verify", async (req, res) => {
   res.json({ ok: true });
 });
 
-r.post("/login", async (req, res) => {
+router.post("/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
@@ -47,7 +45,7 @@ r.post("/login", async (req, res) => {
   res.json({ token });
 });
 
-r.post("/forgot", async (req, res) => {
+router.post("/forgot", async (req: Request, res: Response) => {
   const { email } = req.body;
   const user = await prisma.user.findUnique({ where: { email } });
   if (user) {
@@ -60,7 +58,7 @@ r.post("/forgot", async (req, res) => {
   res.json({ ok: true });
 });
 
-r.post("/reset", async (req, res) => {
+router.post("/reset", async (req: Request, res: Response) => {
   const { token, password } = req.body;
   const prt = await prisma.passwordResetToken.findUnique({ where: { token } });
   if (!prt || prt.used || prt.expiresAt < new Date()) return res.status(400).json({ error: "Token inválido" });
@@ -70,4 +68,4 @@ r.post("/reset", async (req, res) => {
   res.json({ ok: true });
 });
 
-export const authRoutes = r;
+export const authRoutes = router;
